@@ -1,0 +1,73 @@
+name: Hourly feature pipeline
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/features.yml'
+      - 'src/**'
+      - 'pyproject.toml'
+      - 'uv.lock'
+  schedule:
+    - cron: "50 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: feature-store
+  cancel-in-progress: false
+jobs:
+  features:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.9.8"
+      - run: uv sync --locked --python 3.13
+      - name: Locate last durable feature-store artifact
+        id: previous
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const artifacts = await github.paginate(github.rest.actions.listArtifactsForRepo, {
+              owner: context.repo.owner, repo: context.repo.repo, name: 'feature-store', per_page: 100
+            });
+            const valid = artifacts.filter(a => !a.expired && a.workflow_run?.head_branch === context.payload.repository.default_branch);
+            valid.sort((a, b) => b.id - a.id);
+            if (valid.length) core.setOutput('run', valid[0].workflow_run.id);
+      - uses: actions/download-artifact@v4
+        if: steps.previous.outputs.run != ''
+        with:
+          name: feature-store
+          path: data
+          run-id: ${{ steps.previous.outputs.run }}
+          github-token: ${{ github.token }}
+      - name: Probe official GTFS archive (report blocked history without inventing coverage)
+        continue-on-error: true
+        run: uv run --locked gaeja gtfs-discover --year 2026
+      - name: Bootstrap a verified downloadable official GTFS feed
+        run: |
+          if [ ! -d data/gtfs ]; then
+            uv run --locked gaeja gtfs-download https://archive.opentransportdata.swiss/timetable_gtfs/timetable-2026-gtfs2020/GTFS_FP2026_20260503.zip
+          fi
+      - name: Ingest and archive publication latency
+        run: uv run --locked gaeja ingest
+      - name: Backfill measured target history
+        run: uv run --locked gaeja backfill --start 2024-03-14T00:00:00Z --end "$(date -u +%Y-%m-%dT%H:00:00Z)"
+      - name: Evaluate frozen out-of-time holdout
+        run: uv run --locked gaeja evaluate --split 2026-10-01T00:00:00Z
+      - name: Archive live baseline forecast
+        run: uv run --locked gaeja live
+      - name: Score matured live predictions
+        if: always()
+        run: uv run --locked gaeja monitor
+      - name: Persist features even if a downstream step failed
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: feature-store
+          path: data/
+          if-no-files-found: error
+          retention-days: 30

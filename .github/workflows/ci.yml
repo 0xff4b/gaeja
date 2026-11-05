@@ -1,0 +1,19 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.9.8"
+      - run: uv sync --locked --extra dev --python 3.13
+      - run: uv run --locked ruff check .
+      - run: uv run --locked pytest -q
+      - run: docker build -t gaeja:test .
+      - run: docker run --rm gaeja:test --help
