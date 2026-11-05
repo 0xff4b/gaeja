@@ -96,8 +96,8 @@ def main():
     )
     text(
         "<b>Not claimed complete:</b> official GTFS catalog returns HTTP 403; historical coverage is "
-        "unsecured. Docker build and container CLI smoke test now pass. GitHub workflows must "
-        "be pushed and observed before calling scheduling operational. Artifacts have 30-day retention. "
+        "unsecured. Docker and GitHub CI pass. Feature run 42120102072 succeeded, restored prior "
+        "state and persisted its artifact; hourly cron remains configured but not observed. Artifacts have 30-day retention. "
         "No school-holiday dates or weather-prototype provenance were invented."
     )
 

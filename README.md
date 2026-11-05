@@ -13,7 +13,10 @@ predictions and delayed-label error monitoring. Tests and CI/container/scheduled
 **GitHub execution:** implementation pushed; CI passed. Initial feature run ingested/backfilled,
 evaluated and persisted its artifact but exposed a Linux timestamp-resolution mismatch in live
 inference. A regression-tested fix normalizes availability times to nanoseconds; verification of
-the corrected run is recorded below. Docker image
+the corrected run passed: [feature pipeline run 42120102072](https://github.com/0xff4b/gaeja/actions/runs/42120102072)
+and [CI run 42120102238](https://github.com/0xff4b/gaeja/actions/runs/42120102238).
+The feature run restored previous state and uploaded an 8.4 MB `feature-store` artifact (30-day retention).
+This verifies push-triggered execution; the hourly cron is configured, not yet independently observed. Docker image
 build and container CLI smoke test passed. The official 2026-11-04 GTFS ZIP was imported successfully;
 113 Zürich HB arrivals were verified for 2026-11-05 16:00–17:00 UTC. Automated catalog access still
 returns HTTP 403; no historical point-in-time GTFS backfill or ablation result is claimed. No cloud serving UI/model registry yet (MS3/MS4).
