@@ -82,7 +82,9 @@ def build_features(
                     "available_at": availability.reindex(values.index).values,
                 }
             )
-            historical["available_at"] = pd.to_datetime(historical["available_at"], utc=True)
+            historical["available_at"] = pd.to_datetime(
+                historical["available_at"], utc=True
+            ).astype("datetime64[ns, UTC]")
             historical = historical.dropna(subset=["available_at"]).sort_values("available_at")
             # Cumulative latest event-time prevents late revisions to older intervals regressing state.
             historical["latest_time"] = historical.observed_time.cummax()

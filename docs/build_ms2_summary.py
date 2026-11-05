@@ -90,7 +90,7 @@ def main():
         "GTFS ablation: not yet possible on real point-in-time history."
     )
     text(
-        "<b>Verified locally:</b> 18 tests pass with warnings treated as errors; Ruff passes; live "
+        "<b>Verified locally:</b> 19 tests pass with warnings treated as errors; Ruff passes; live "
         "Hystreet ingestion, 48 Open-Meteo forecast rows, backfill, evaluation and a versioned baseline "
         "forecast ran. No live labels have matured yet. Data/reports stay gitignored; commands reproduce them."
     )

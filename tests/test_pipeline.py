@@ -244,3 +244,17 @@ def test_revised_value_cannot_enter_earlier_live_decision(tmp_path):
     )
     assert pd.isna(features.flow_lag_2.iloc[0])
     assert features.flow_age_hours.iloc[0] == 3
+
+
+def test_live_accepts_microsecond_parquet_timestamps(tmp_path):
+    data = counts()
+    data["first_seen_at"] = data.first_seen_at.astype("datetime64[us, UTC]")
+    target = data.timestamp.iloc[200]
+    result = build_features(
+        data,
+        pd.DatetimeIndex([target]),
+        tmp_path,
+        live=True,
+        decision_at=target - pd.Timedelta(minutes=10),
+    )
+    assert result.flow_age_hours.iloc[0] == 2
